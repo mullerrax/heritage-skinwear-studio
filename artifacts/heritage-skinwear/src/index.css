@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary-border: var(--sidebar-primary-border);
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent-border: var(--sidebar-accent-border);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 42 31% 91%;
+  --foreground: 204 31% 19%;
+  --border: 39 19% 78%;
+  --input: 39 19% 78%;
+  --ring: 38 74% 49%;
+  --card: 42 35% 94%;
+  --card-foreground: 204 31% 19%;
+  --card-border: 39 19% 78%;
+  --popover: 42 35% 94%;
+  --popover-foreground: 204 31% 19%;
+  --popover-border: 39 19% 78%;
+  --primary: 204 31% 19%;
+  --primary-foreground: 42 35% 94%;
+  --secondary: 37 73% 49%;
+  --secondary-foreground: 204 31% 19%;
+  --muted: 39 22% 84%;
+  --muted-foreground: 204 15% 42%;
+  --accent: 14 42% 47%;
+  --accent-foreground: 42 35% 94%;
+  --sidebar: 204 31% 19%;
+  --sidebar-foreground: 42 35% 94%;
+  --sidebar-border: 204 25% 28%;
+  --sidebar-primary: 37 73% 49%;
+  --sidebar-primary-foreground: 204 31% 19%;
+  --sidebar-accent: 204 25% 28%;
+  --sidebar-accent-foreground: 42 35% 94%;
+  --sidebar-ring: 37 73% 49%;
+  --app-font-sans: 'Plus Jakarta Sans', sans-serif;
+  --app-font-serif: 'Cormorant Garamond', Georgia, serif;
+  --app-font-mono: 'Plus Jakarta Sans', sans-serif;
+  --radius: 0.65rem;
+  --primary-border: hsl(var(--primary));
+  --secondary-border: hsl(var(--secondary));
+  --muted-border: hsl(var(--muted));
+  --accent-border: hsl(var(--accent));
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --elevate-1: rgba(27, 48, 60, 0.06);
+  --elevate-2: rgba(27, 48, 60, 0.1);
+}
+
+.dark {
+  --background: 204 31% 19%;
+  --foreground: 42 35% 94%;
+  --border: 204 25% 28%;
+  --input: 204 25% 28%;
+  --ring: 37 73% 49%;
+  --card: 204 27% 23%;
+  --card-foreground: 42 35% 94%;
+  --card-border: 204 25% 28%;
+  --popover: 204 27% 23%;
+  --popover-foreground: 42 35% 94%;
+  --popover-border: 204 25% 28%;
+  --primary: 42 35% 94%;
+  --primary-foreground: 204 31% 19%;
+  --secondary: 37 73% 49%;
+  --secondary-foreground: 204 31% 19%;
+  --muted: 204 24% 29%;
+  --muted-foreground: 42 16% 70%;
+  --accent: 14 42% 53%;
+  --accent-foreground: 42 35% 94%;
+  --sidebar: 204 34% 14%;
+  --sidebar-foreground: 42 35% 94%;
+  --sidebar-border: 204 25% 28%;
+  --sidebar-primary: 37 73% 49%;
+  --sidebar-primary-foreground: 204 31% 19%;
+  --sidebar-accent: 204 25% 28%;
+  --sidebar-accent-foreground: 42 35% 94%;
+  --sidebar-ring: 37 73% 49%;
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    background-image: radial-gradient(rgba(27, 48, 60, 0.045) 0.65px, transparent 0.65px);
+    background-size: 7px 7px;
+  }
+  ::selection { background: hsl(var(--secondary)); color: hsl(var(--primary)); }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--app-font-serif); }
+  .eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+  .section-rule { border-top: 1px solid hsl(var(--border)); }
+  .texture-noise {
+    position: relative;
+    isolation: isolate;
+  }
+  .texture-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.14;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 700ms ease, transform 700ms ease;
+  }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 80ms; }
+  .reveal-delay-2 { transition-delay: 160ms; }
+  .reveal-delay-3 { transition-delay: 240ms; }
+  .image-zoom img { transition: transform 800ms cubic-bezier(.2,.7,.2,1); }
+  .image-zoom:hover img { transform: scale(1.045); }
+  .focus-ring:focus-visible { outline: 2px solid hsl(var(--secondary)); outline-offset: 4px; }
+  .vertical-label { writing-mode: vertical-rl; transform: rotate(180deg); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

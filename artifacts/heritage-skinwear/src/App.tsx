@@ -1,0 +1,492 @@
+import { useEffect, useMemo, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  Facebook,
+  Instagram,
+  Leaf,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Ruler,
+  ShieldCheck,
+  Snowflake,
+  X,
+} from 'lucide-react';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Route, Switch, Router as WouterRouter } from 'wouter';
+
+const queryClient = new QueryClient();
+const WHATSAPP_DESTINATION = 'https://wa.me/15551234567';
+
+type Product = {
+  name: string;
+  category: 'Footwear' | 'Outerwear' | 'Accessories';
+  description: string;
+  image: string;
+  detail: string;
+  season: string;
+};
+
+const products: Product[] = [
+  {
+    name: 'Driftwood Mukluk',
+    category: 'Footwear',
+    description: 'A soft, light-footed winter boot shaped for long walks on packed snow.',
+    image: 'https://images.pexels.com/photos/7691755/pexels-photo-7691755.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    detail: 'Suede upper · wool-lined interior · custom fit',
+    season: 'Winter / everyday',
+  },
+  {
+    name: 'Northline Parka',
+    category: 'Outerwear',
+    description: 'A generous hide parka with a quiet silhouette and room to layer beneath.',
+    image: 'https://images.pexels.com/photos/5699163/pexels-photo-5699163.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    detail: 'Ethically sourced hide · deep hand pockets · made to measure',
+    season: 'Cold weather / made to order',
+  },
+  {
+    name: 'Frostline Mitts',
+    category: 'Accessories',
+    description: 'Warm, hard-wearing handwear for the pause between one task and the next.',
+    image: 'https://images.pexels.com/photos/3769138/pexels-photo-3769138.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    detail: 'Supple hide · wool cuff · set of two',
+    season: 'Winter / daily wear',
+  },
+  {
+    name: 'Tide & Timber Boot',
+    category: 'Footwear',
+    description: 'A taller boot with a clean line, built for wind, slush, and changing ground.',
+    image: 'https://images.pexels.com/photos/1456706/pexels-photo-1456706.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    detail: 'Tanned hide · felt insole · adjustable shaft',
+    season: 'Shoulder season / winter',
+  },
+];
+
+const processSteps = [
+  {
+    number: '01',
+    title: 'A useful beginning',
+    body: 'We start with your place, your weather, and how you move through a day. A short conversation is the first measurement.',
+    icon: MapPin,
+  },
+  {
+    number: '02',
+    title: 'Materials with a story',
+    body: 'Hide, wool, lining, and hardware are selected with care. We share what is available before anything is cut.',
+    icon: Leaf,
+  },
+  {
+    number: '03',
+    title: 'Cut by hand',
+    body: 'Patterns are adjusted for your proportions and use. Every seam, edge, and tie is handled slowly at the studio table.',
+    icon: Ruler,
+  },
+  {
+    number: '04',
+    title: 'Ready for real weather',
+    body: 'We finish, check, and photograph the piece before it travels. Shipping and care notes are confirmed with you directly.',
+    icon: ShieldCheck,
+  },
+];
+
+function openEnquiry(productName?: string) {
+  const message = productName
+    ? `Hello, I’d like to ask about the ${productName}. Could you share current materials, sizing, availability, pricing, and shipping options?`
+    : 'Hello, I’d like to start a custom conversation about a Heritage Skinwear Studio piece. Could you tell me what is currently available?';
+  window.open(`${WHATSAPP_DESTINATION}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+}
+
+function useReveal() {
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+    if (!('IntersectionObserver' in window)) {
+      elements.forEach((element) => element.classList.add('is-visible'));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+    );
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+}
+
+function SiteNav({ onEnquire }: { onEnquire: () => void }) {
+  const [open, setOpen] = useState(false);
+  const links = [
+    { label: 'Collection', href: '#collection' },
+    { label: 'The studio', href: '#studio' },
+    { label: 'Our process', href: '#process' },
+  ];
+  const closeMenu = () => setOpen(false);
+
+  return (
+    <header className="absolute inset-x-0 top-0 z-30">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8 lg:px-14 lg:py-7">
+        <a href="#top" onClick={closeMenu} className="focus-ring flex items-center gap-3 text-[hsl(var(--card))]" data-testid="link-brand">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[hsl(var(--secondary)/.7)] text-[hsl(var(--secondary))]">
+            <Snowflake size={16} strokeWidth={1.4} />
+          </span>
+          <span className="leading-[0.9]">
+            <span className="block font-display text-xl font-semibold tracking-[0.03em]">Heritage</span>
+            <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-[hsl(var(--card)/.72)]">Skinwear Studio</span>
+          </span>
+        </a>
+
+        <nav className="hidden items-center gap-8 md:flex" aria-label="Main navigation">
+          {links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="focus-ring text-[11px] font-semibold uppercase tracking-[0.16em] text-[hsl(var(--card)/.78)] transition-colors hover:text-[hsl(var(--secondary))]"
+              data-testid={`link-nav-${link.label.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <button
+          type="button"
+          onClick={onEnquire}
+          className="focus-ring hidden items-center gap-2 rounded-full border border-[hsl(var(--secondary)/.75)] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--card))] transition-colors hover:bg-[hsl(var(--secondary))] hover:text-[hsl(var(--primary))] md:flex"
+          data-testid="button-nav-enquire"
+        >
+          Start a conversation <ArrowUpRight size={14} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="focus-ring rounded-full border border-[hsl(var(--card)/.3)] p-2 text-[hsl(var(--card))] md:hidden"
+          aria-expanded={open}
+          aria-label={open ? 'Close navigation' : 'Open navigation'}
+          data-testid="button-mobile-menu"
+        >
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {open && (
+        <div className="mx-4 rounded-2xl border border-[hsl(var(--card)/.16)] bg-[hsl(var(--primary)/.96)] p-5 shadow-2xl md:hidden">
+          <nav className="flex flex-col gap-5" aria-label="Mobile navigation">
+            {links.map((link) => (
+              <a key={link.href} href={link.href} onClick={closeMenu} className="focus-ring border-b border-[hsl(var(--card)/.12)] pb-4 text-sm font-semibold text-[hsl(var(--card))]" data-testid={`link-mobile-${link.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                {link.label}
+              </a>
+            ))}
+            <button type="button" onClick={() => { closeMenu(); onEnquire(); }} className="flex items-center justify-between rounded-xl bg-[hsl(var(--secondary))] px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-[hsl(var(--primary))]" data-testid="button-mobile-enquire">
+              Start a conversation <ArrowUpRight size={16} />
+            </button>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
+
+function ImageFrame({ src, alt, className = '' }: { src: string; alt: string; className?: string }) {
+  return (
+    <div className={`image-zoom overflow-hidden ${className}`}>
+      <img src={src} alt={alt} className="h-full w-full object-cover" loading="lazy" />
+    </div>
+  );
+}
+
+function ProductCard({ product, index }: { product: Product; index: number }) {
+  return (
+    <article className={`reveal reveal-delay-${Math.min(index + 1, 3)} group`} data-testid={`card-product-${product.name.toLowerCase().replace(/\s+/g, '-')}`}>
+      <div className="relative mb-5 aspect-[4/5] overflow-hidden bg-[hsl(var(--muted))]">
+        <ImageFrame src={product.image} alt={product.name} className="h-full w-full" />
+        <span className="absolute left-4 top-4 bg-[hsl(var(--card)/.9)] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.17em] text-[hsl(var(--primary))]">{product.category}</span>
+        <button type="button" onClick={() => openEnquiry(product.name)} className="focus-ring absolute bottom-4 right-4 flex translate-y-2 items-center gap-2 rounded-full bg-[hsl(var(--secondary))] px-3.5 py-2.5 text-[10px] font-bold uppercase tracking-[0.13em] text-[hsl(var(--primary))] opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100 max-sm:translate-y-0 max-sm:opacity-100" data-testid={`button-enquire-${index}`}>
+          Ask about this piece <ArrowUpRight size={14} />
+        </button>
+      </div>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="font-display text-3xl font-semibold leading-none text-[hsl(var(--primary))]">{product.name}</h3>
+          <p className="mt-2 max-w-[260px] text-sm leading-6 text-[hsl(var(--muted-foreground))]">{product.description}</p>
+        </div>
+        <button type="button" onClick={() => openEnquiry(product.name)} className="focus-ring mt-1 shrink-0 rounded-full border border-[hsl(var(--primary)/.22)] p-2.5 text-[hsl(var(--primary))] transition-colors hover:border-[hsl(var(--secondary))] hover:bg-[hsl(var(--secondary))]" aria-label={`Enquire about ${product.name}`} data-testid={`button-product-arrow-${index}`}>
+          <ArrowUpRight size={16} />
+        </button>
+      </div>
+      <div className="mt-4 flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[hsl(var(--muted-foreground))]">
+        <span>{product.detail}</span>
+        <span className="hidden sm:block">{product.season}</span>
+      </div>
+    </article>
+  );
+}
+
+function Home() {
+  const [activeCategory, setActiveCategory] = useState<'All' | Product['category']>('All');
+  useReveal();
+
+  useEffect(() => {
+    document.title = 'Heritage Skinwear Studio — Northern-inspired hide goods';
+    const description = 'Handcrafted northern-inspired clothing and footwear, made with respect in a small maker studio.';
+    const setMeta = (name: string, content: string, property = false) => {
+      const selector = property ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+      let meta = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!meta) {
+        meta = document.createElement('meta');
+        if (property) meta.setAttribute('property', name);
+        else meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.content = content;
+    };
+    setMeta('description', description);
+    setMeta('og:title', 'Heritage Skinwear Studio — Made for the long season', true);
+    setMeta('og:description', description, true);
+    setMeta('og:type', 'website', true);
+    setMeta('og:image', 'https://images.pexels.com/photos/5699163/pexels-photo-5699163.jpeg?auto=compress&cs=tinysrgb&w=1600', true);
+  }, []);
+
+  const filteredProducts = useMemo(
+    () => activeCategory === 'All' ? products : products.filter((product) => product.category === activeCategory),
+    [activeCategory],
+  );
+
+  return (
+    <main id="top" className="min-h-[100dvh] overflow-hidden bg-[hsl(var(--background))]">
+      <section className="texture-noise relative isolate min-h-[710px] overflow-hidden bg-[hsl(var(--primary))] text-[hsl(var(--card))] sm:min-h-[780px]">
+        <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(18,34,43,.93)_0%,rgba(18,34,43,.76)_42%,rgba(18,34,43,.24)_100%)]" />
+        <img src="https://images.pexels.com/photos/5699163/pexels-photo-5699163.jpeg?auto=compress&cs=tinysrgb&w=2000" alt="Winter landscape and layered cold-weather clothing" className="absolute inset-0 -z-30 h-full w-full object-cover object-center opacity-80 mix-blend-luminosity" />
+        <div className="absolute -right-24 top-44 -z-10 h-[420px] w-[420px] rounded-full border border-[hsl(var(--secondary)/.28)] sm:right-[-80px] sm:h-[560px] sm:w-[560px]" />
+        <div className="absolute -right-8 top-72 -z-10 h-[290px] w-[290px] rounded-full border border-[hsl(var(--secondary)/.17)] sm:right-[40px] sm:h-[390px] sm:w-[390px]" />
+        <SiteNav onEnquire={() => openEnquiry()} />
+
+        <div className="mx-auto flex min-h-[710px] max-w-[1440px] items-end px-5 pb-14 pt-36 sm:min-h-[780px] sm:px-8 sm:pb-20 lg:px-14">
+          <div className="relative z-10 max-w-[740px]">
+            <p className="reveal eyebrow mb-7 flex items-center gap-3 text-[hsl(var(--secondary))]"><span className="h-px w-8 bg-[hsl(var(--secondary))]" /> Small-batch hide goods · northern Canada</p>
+            <h1 className="reveal reveal-delay-1 max-w-[760px] font-display text-[clamp(4.4rem,10vw,9.6rem)] font-semibold leading-[.79] tracking-[-.045em] text-[hsl(var(--card))]">Made for<br /><span className="ml-[.7em] text-[hsl(var(--secondary))]">the long</span><br />season.</h1>
+            <div className="reveal reveal-delay-2 mt-9 flex max-w-[560px] flex-col gap-7 sm:ml-[10%] sm:flex-row sm:items-end sm:gap-10">
+              <p className="max-w-[330px] text-sm leading-7 text-[hsl(var(--card)/.72)]">Handcrafted clothing and footwear from a small northern studio. Considered materials, patient hands, and pieces made to meet the weather where you are.</p>
+              <a href="#collection" className="focus-ring inline-flex shrink-0 items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[hsl(var(--card))] transition-colors hover:text-[hsl(var(--secondary))]" data-testid="link-hero-collection">Explore the collection <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[hsl(var(--secondary)/.7)]"><ArrowDown size={15} /></span></a>
+            </div>
+          </div>
+        </div>
+        <div className="absolute bottom-9 right-7 hidden items-center gap-3 text-[9px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--card)/.55)] lg:flex"><span className="h-px w-12 bg-[hsl(var(--card)/.35)]" /> 64° N · built slowly</div>
+      </section>
+
+      <div className="overflow-hidden border-b border-[hsl(var(--border))] bg-[hsl(var(--secondary))] py-3.5 text-[hsl(var(--primary))]">
+        <div className="flex min-w-max animate-[marquee_26s_linear_infinite] items-center gap-9 text-[10px] font-bold uppercase tracking-[0.2em]">
+          {Array.from({ length: 2 }).flatMap((_, group) => ['Made with respect', 'Small-batch by hand', 'Cold-region ready', 'Custom conversations'].map((item, index) => <span key={`${group}-${index}`} className="flex items-center gap-9"><span>{item}</span><span className="text-[hsl(var(--accent))]">·</span></span>))}
+        </div>
+      </div>
+
+      <section className="mx-auto max-w-[1440px] px-5 py-24 sm:px-8 sm:py-32 lg:px-14">
+        <div className="grid gap-12 lg:grid-cols-[.75fr_1.25fr] lg:gap-24">
+          <div className="reveal">
+            <p className="eyebrow text-[hsl(var(--accent))]">A considered layer</p>
+            <div className="mt-6 h-px w-20 bg-[hsl(var(--accent))]" />
+          </div>
+          <div className="reveal reveal-delay-1">
+            <h2 className="max-w-[850px] font-display text-[clamp(2.8rem,5.4vw,5.8rem)] font-semibold leading-[.92] tracking-[-.035em] text-[hsl(var(--primary))]">The north asks for clothing that does more than look the part.</h2>
+            <p className="mt-8 max-w-[640px] text-base leading-8 text-[hsl(var(--muted-foreground))]">It should move when you move, keep its promise in a crosswind, and get better acquainted with your life. Heritage Skinwear Studio makes northern-inspired hide goods with that practical poetry in mind.</p>
+            <a href="#studio" className="focus-ring mt-8 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[hsl(var(--accent))] transition-colors hover:text-[hsl(var(--primary))]" data-testid="link-intro-studio">Meet the maker <ArrowRight size={15} /></a>
+          </div>
+        </div>
+      </section>
+
+      <section id="collection" className="scroll-mt-10 bg-[hsl(var(--card))] px-5 py-24 sm:px-8 sm:py-32 lg:px-14">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="reveal flex flex-col justify-between gap-7 border-b border-[hsl(var(--border))] pb-8 sm:flex-row sm:items-end">
+            <div>
+              <p className="eyebrow text-[hsl(var(--accent))]">The current collection</p>
+              <h2 className="mt-3 font-display text-5xl font-semibold tracking-[-.03em] text-[hsl(var(--primary))] sm:text-7xl">Pieces with a pulse.</h2>
+            </div>
+            <p className="max-w-[300px] text-sm leading-6 text-[hsl(var(--muted-foreground))]">A small edit of made-to-order forms. Availability, materials, sizing, pricing, and shipping are confirmed in conversation.</p>
+          </div>
+          <div className="reveal reveal-delay-1 mt-7 flex flex-wrap gap-2" role="tablist" aria-label="Filter collection">
+            {(['All', 'Footwear', 'Outerwear', 'Accessories'] as const).map((category) => (
+              <button type="button" key={category} onClick={() => setActiveCategory(category)} role="tab" aria-selected={activeCategory === category} className={`focus-ring rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${activeCategory === category ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--card))]' : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/.5)] hover:text-[hsl(var(--primary))]'}`} data-testid={`button-filter-${category.toLowerCase()}`}>
+                {category}
+              </button>
+            ))}
+          </div>
+          <div className="mt-12 grid gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-4">
+            {filteredProducts.map((product, index) => <ProductCard key={product.name} product={product} index={index} />)}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[hsl(var(--primary))] px-5 py-24 text-[hsl(var(--card))] sm:px-8 sm:py-32 lg:px-14">
+        <div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[.9fr_1.1fr] lg:gap-20">
+          <div className="reveal relative min-h-[480px] overflow-hidden bg-[hsl(var(--accent))] sm:min-h-[620px]">
+            <ImageFrame src="https://images.pexels.com/photos/7691755/pexels-photo-7691755.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Handmade winter boot resting beside a wool blanket" className="h-full w-full opacity-90 mix-blend-luminosity" />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[hsl(var(--primary)/.85)] to-transparent p-7 pt-28">
+              <p className="eyebrow text-[hsl(var(--secondary))]">Field note / 01</p>
+              <p className="mt-2 max-w-[220px] font-display text-3xl leading-none">Soft where it should be. Steady where it matters.</p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center">
+            <p className="reveal eyebrow text-[hsl(var(--secondary))]">The story in the making</p>
+            <h2 className="reveal reveal-delay-1 mt-5 max-w-[700px] font-display text-[clamp(3rem,6vw,6.5rem)] font-semibold leading-[.84] tracking-[-.04em]">A good piece<br /><span className="text-[hsl(var(--secondary))]">settles in.</span></h2>
+            <p className="reveal reveal-delay-2 mt-9 max-w-[530px] text-base leading-8 text-[hsl(var(--card)/.68)]">You feel it in the first walk: the balance of a boot, the give of a mitten, the way a parka leaves room for a sweater and a full breath. Our forms are simple on purpose, then made specific to the person wearing them.</p>
+            <div className="reveal reveal-delay-3 mt-10 grid max-w-[520px] grid-cols-2 gap-6 border-t border-[hsl(var(--card)/.18)] pt-6 sm:grid-cols-3">
+              <div><p className="font-display text-4xl text-[hsl(var(--secondary))]">01</p><p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--card)/.55)]">Quiet silhouette</p></div>
+              <div><p className="font-display text-4xl text-[hsl(var(--secondary))]">02</p><p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--card)/.55)]">Useful warmth</p></div>
+              <div><p className="font-display text-4xl text-[hsl(var(--secondary))]">03</p><p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--card)/.55)]">Your proportions</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="process" className="scroll-mt-10 px-5 py-24 sm:px-8 sm:py-32 lg:px-14">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="reveal grid gap-8 border-b border-[hsl(var(--border))] pb-10 lg:grid-cols-[.65fr_1.35fr]">
+            <p className="eyebrow text-[hsl(var(--accent))]">How it comes together</p>
+            <div>
+              <h2 className="max-w-[720px] font-display text-[clamp(3rem,5.5vw,6rem)] font-semibold leading-[.87] tracking-[-.04em] text-[hsl(var(--primary))]">Slow is a material choice.</h2>
+              <p className="mt-7 max-w-[530px] text-base leading-8 text-[hsl(var(--muted-foreground))]">The work stays small so the decisions can stay close. Here is what a custom conversation looks like from our side of the table.</p>
+            </div>
+          </div>
+          <div className="grid divide-y divide-[hsl(var(--border))] md:grid-cols-4 md:divide-x md:divide-y-0">
+            {processSteps.map(({ number, title, body, icon: Icon }, index) => (
+              <div key={number} className={`reveal reveal-delay-${Math.min(index + 1, 3)} p-0 py-9 md:px-7 md:py-10 ${index === 0 ? 'md:pl-0' : ''} ${index === processSteps.length - 1 ? 'md:pr-0' : ''}`} data-testid={`process-step-${number}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-4xl text-[hsl(var(--accent))]">{number}</span>
+                  <Icon size={21} strokeWidth={1.3} className="text-[hsl(var(--accent))]" />
+                </div>
+                <h3 className="mt-11 font-display text-3xl font-semibold leading-none text-[hsl(var(--primary))]">{title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[hsl(var(--muted-foreground))]">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="studio" className="scroll-mt-10 bg-[hsl(var(--muted)/.68)] px-5 py-24 sm:px-8 sm:py-32 lg:px-14">
+        <div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:gap-24">
+          <div className="reveal order-2 lg:order-1">
+            <p className="eyebrow text-[hsl(var(--accent))]">About the studio</p>
+            <h2 className="mt-5 max-w-[680px] font-display text-[clamp(3.2rem,6vw,6.8rem)] font-semibold leading-[.83] tracking-[-.04em] text-[hsl(var(--primary))]">A small room.<br />A wide north.</h2>
+            <p className="mt-9 max-w-[580px] text-base leading-8 text-[hsl(var(--muted-foreground))]">Heritage Skinwear Studio is a one-maker practice based in the north, shaped by long winters, practical beauty, and a deep respect for the work that came before us. We make northern-inspired pieces without pretending to speak for a specific nation or tradition.</p>
+            <p className="mt-5 max-w-[580px] text-base leading-8 text-[hsl(var(--muted-foreground))]">The studio is intentionally small. That means fewer pieces, direct communication, and a real chance to ask questions before you decide.</p>
+            <button type="button" onClick={() => openEnquiry()} className="focus-ring mt-9 inline-flex items-center gap-3 border-b border-[hsl(var(--accent))] pb-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[hsl(var(--primary))] transition-colors hover:text-[hsl(var(--accent))]" data-testid="button-studio-enquire">Talk with the maker <ArrowUpRight size={15} /></button>
+          </div>
+          <div className="reveal reveal-delay-1 order-1 relative lg:order-2">
+            <div className="absolute -bottom-5 -left-5 h-28 w-28 border-b border-l border-[hsl(var(--accent))] sm:-bottom-8 sm:-left-8 sm:h-40 sm:w-40" />
+            <ImageFrame src="https://images.pexels.com/photos/3769138/pexels-photo-3769138.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Hands and materials on a worktable in a warm craft studio" className="relative aspect-[4/5] w-[88%] bg-[hsl(var(--accent))]" />
+            <div className="absolute -right-1 bottom-8 flex w-[45%] items-center gap-3 bg-[hsl(var(--primary))] px-4 py-4 text-[hsl(var(--card))] sm:-right-5 sm:bottom-12 sm:px-6">
+              <span className="text-[hsl(var(--secondary))]"><Snowflake size={22} strokeWidth={1.2} /></span>
+              <span className="text-[10px] font-bold uppercase leading-4 tracking-[0.14em]">Made north<br />of the 60th</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[hsl(var(--card))] px-5 py-24 sm:px-8 sm:py-32 lg:px-14">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="reveal grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="eyebrow text-[hsl(var(--accent))]">The practical note</p>
+              <h2 className="mt-4 font-display text-5xl font-semibold leading-[.88] tracking-[-.035em] text-[hsl(var(--primary))] sm:text-7xl">Good questions<br />belong here.</h2>
+            </div>
+            <p className="max-w-[530px] text-base leading-8 text-[hsl(var(--muted-foreground))]">Hide is a natural material, so no two pieces will be identical. We will talk honestly about what is on hand, what can be sourced, and what will serve your use best.</p>
+          </div>
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
+            {[
+              { title: 'Materials', body: 'We use ethically sourced animal hides and pair them with practical linings, wool, and hardware. Exact material options are shared before work begins.', icon: Leaf },
+              { title: 'Custom sizing', body: 'Footwear and outerwear can be discussed around your measurements, layers, and movement. We will tell you what is possible.', icon: Ruler },
+              { title: 'Shipping & care', body: 'Shipping, timing, pricing, and care instructions are confirmed in conversation so there are no surprises at the handoff.', icon: Snowflake },
+            ].map(({ title, body, icon: Icon }, index) => (
+              <div key={title} className={`reveal reveal-delay-${index + 1} border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-7 sm:p-9`} data-testid={`note-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+                <Icon size={24} strokeWidth={1.2} className="text-[hsl(var(--accent))]" />
+                <h3 className="mt-12 font-display text-3xl font-semibold text-[hsl(var(--primary))]">{title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[hsl(var(--muted-foreground))]">{body}</p>
+                <div className="mt-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[hsl(var(--accent))]"><Check size={14} /> Confirmed together</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden bg-[hsl(var(--accent))] px-5 py-24 text-[hsl(var(--card))] sm:px-8 sm:py-32 lg:px-14">
+        <div className="absolute right-[-100px] top-[-180px] h-[460px] w-[460px] rounded-full border border-[hsl(var(--card)/.15)]" />
+        <div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[.72fr_1.28fr] lg:items-center">
+          <div className="reveal">
+            <MessageCircle size={30} strokeWidth={1.2} className="text-[hsl(var(--secondary))]" />
+            <p className="mt-8 max-w-[260px] font-display text-4xl leading-[.95] sm:text-5xl">“The best pieces become part of the weather.”</p>
+            <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.18em] text-[hsl(var(--card)/.65)]">A studio principle</p>
+          </div>
+          <div className="reveal reveal-delay-1 relative z-10">
+            <p className="eyebrow text-[hsl(var(--secondary))]">Bring a question, not a shopping list</p>
+            <h2 className="mt-5 max-w-[780px] font-display text-[clamp(3.4rem,6.8vw,7.4rem)] font-semibold leading-[.8] tracking-[-.045em]">Let’s find<br /><span className="text-[hsl(var(--secondary))]">your layer.</span></h2>
+            <p className="mt-9 max-w-[510px] text-base leading-8 text-[hsl(var(--card)/.72)]">Send a note on WhatsApp and tell us where you are, what you need, and what caught your eye. We will reply with what is possible right now.</p>
+            <button type="button" onClick={() => openEnquiry()} className="focus-ring mt-9 inline-flex items-center gap-3 rounded-full bg-[hsl(var(--secondary))] px-6 py-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[hsl(var(--primary))] transition-transform hover:scale-[1.02]" data-testid="button-final-enquire">Open WhatsApp enquiry <ArrowUpRight size={17} /></button>
+            <p className="mt-4 text-[10px] uppercase tracking-[0.13em] text-[hsl(var(--card)/.5)]">No checkout · custom conversations only</p>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-[hsl(var(--primary))] px-5 pb-8 pt-12 text-[hsl(var(--card))] sm:px-8 lg:px-14">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="flex flex-col justify-between gap-10 border-b border-[hsl(var(--card)/.16)] pb-10 md:flex-row md:items-end">
+            <div>
+              <a href="#top" className="focus-ring inline-flex items-center gap-3" data-testid="link-footer-brand">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[hsl(var(--secondary)/.7)] text-[hsl(var(--secondary))]"><Snowflake size={17} strokeWidth={1.4} /></span>
+                <span><span className="block font-display text-2xl font-semibold leading-none">Heritage</span><span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.28em] text-[hsl(var(--card)/.62)]">Skinwear Studio</span></span>
+              </a>
+              <p className="mt-5 max-w-[300px] text-xs leading-6 text-[hsl(var(--card)/.5)]">Northern-inspired hide goods, made with respect and a direct line to the maker.</p>
+            </div>
+            <div className="flex gap-4">
+              <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className="focus-ring rounded-full border border-[hsl(var(--card)/.2)] p-3 text-[hsl(var(--card)/.72)] transition-colors hover:border-[hsl(var(--secondary))] hover:text-[hsl(var(--secondary))]" aria-label="Instagram" data-testid="link-instagram"><Instagram size={17} /></a>
+              <a href="https://www.facebook.com" target="_blank" rel="noreferrer" className="focus-ring rounded-full border border-[hsl(var(--card)/.2)] p-3 text-[hsl(var(--card)/.72)] transition-colors hover:border-[hsl(var(--secondary))] hover:text-[hsl(var(--secondary))]" aria-label="Facebook" data-testid="link-facebook"><Facebook size={17} /></a>
+              <button type="button" onClick={() => openEnquiry()} className="focus-ring flex items-center gap-2 rounded-full border border-[hsl(var(--secondary)/.7)] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.13em] text-[hsl(var(--secondary))]" data-testid="button-footer-enquire">WhatsApp <ArrowUpRight size={14} /></button>
+            </div>
+          </div>
+          <div className="flex flex-col justify-between gap-3 pt-6 text-[9px] font-semibold uppercase tracking-[0.15em] text-[hsl(var(--card)/.38)] sm:flex-row">
+            <span>© {new Date().getFullYear()} Heritage Skinwear Studio</span>
+            <span>Made for cold-region communities · Canada & beyond</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+function Router() {
+  return (
+    <ErrorBoundary>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route component={Home} />
+      </Switch>
+    </ErrorBoundary>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <Router />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

@@ -1,6 +1,6 @@
-# [Project name]
+# Heritage Skinwear Studio
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An editorial storefront for a northern maker of handcrafted hide clothing and footwear, turning social traffic into WhatsApp enquiries.
 
 ## Run & Operate
 
@@ -22,23 +22,32 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/heritage-skinwear/src/App.tsx` — single-page site content, collection data, navigation, and WhatsApp enquiry behavior
+- `artifacts/heritage-skinwear/src/index.css` — visual theme, responsive styles, motion, and typography tokens
+- `artifacts/heritage-skinwear/index.html` — document metadata and social-share tags
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first release is a static React/Vite site with no database or API dependency.
+- Product enquiries intentionally open WhatsApp with a product-specific prefilled message instead of using checkout.
+- Copy uses northern-inspired and respectful language without inventing a specific nation, tribe, or ceremonial meaning.
+- Product, image, and WhatsApp destination values are kept close to the page source for easy client handoff edits.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Visitors can browse the maker story and collection from a Facebook link.
+- Collection filters separate footwear, outerwear, and accessories.
+- Product and site-wide enquiry actions open a WhatsApp conversation with availability, sizing, pricing, and shipping prompts.
+- Responsive navigation and motion-enhanced editorial sections support desktop and mobile visitors.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the build free to host and easy for a first-time site builder to hand off.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Replace the placeholder WhatsApp destination in `artifacts/heritage-skinwear/src/App.tsx` before sharing the site publicly.
+- The current product imagery is remote placeholder/editorial imagery; replace with the client’s own product photos for the final launch.
 
 ## Pointers
 
