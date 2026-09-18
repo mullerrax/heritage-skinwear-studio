@@ -24,3 +24,8 @@ channel = "stable-25_05"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-a2da0272-47c4-4a59-a7c1-725e707007c7"
+
+[userenv]
+
+[userenv.production]
+ADMIN_CLERK_USER_EMAILS = "mulleramirax@gmail.com"
