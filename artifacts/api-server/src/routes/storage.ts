@@ -13,6 +13,30 @@ import { requireAdmin } from "../middlewares/adminAuth";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const IMAGE_EXTENSIONS = new Set([
+  'avif',
+  'bmp',
+  'gif',
+  'heic',
+  'heif',
+  'ico',
+  'jpeg',
+  'jpg',
+  'png',
+  'svg',
+  'tif',
+  'tiff',
+  'webp',
+]);
+
+function isImageUpload(name: string, contentType: string): boolean {
+  if (contentType.toLowerCase().startsWith('image/')) {
+    return true;
+  }
+  const extension = name.split('.').pop()?.toLowerCase();
+  return Boolean(extension && IMAGE_EXTENSIONS.has(extension));
+}
 
 /**
  * POST /storage/uploads/request-url
@@ -34,6 +58,16 @@ router.post(
 
     try {
       const { name, size, contentType } = parsed.data;
+      if (size > MAX_IMAGE_SIZE_BYTES) {
+        res.status(413).json({ error: 'Images must be 10 MB or smaller' });
+        return;
+      }
+      if (!isImageUpload(name, contentType)) {
+        res.status(415).json({
+          error: 'Please choose an image file such as JPG, PNG, GIF, WEBP, AVIF, HEIC, TIFF, SVG, or BMP',
+        });
+        return;
+      }
 
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       const objectPath =

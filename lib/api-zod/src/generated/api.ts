@@ -234,13 +234,14 @@ export const ModerateReviewResponse = zod.object({
  * @summary Request a protected product image upload URL
  */
 
+export const requestUploadUrlBodySizeMax = 10485760;
 
 
 
 
 export const RequestUploadUrlBody = zod.object({
   "name": zod.string().min(1),
-  "size": zod.number().int().min(1),
+  "size": zod.number().int().min(1).max(requestUploadUrlBodySizeMax),
   "contentType": zod.string().min(1)
 })
 

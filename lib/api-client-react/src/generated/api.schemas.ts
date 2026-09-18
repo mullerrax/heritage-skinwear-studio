@@ -83,7 +83,10 @@ export interface ReviewModeration {
 export interface UploadRequest {
   /** @minLength 1 */
   name: string;
-  /** @minimum 1 */
+  /**
+     * @minimum 1
+     * @maximum 10485760
+     */
   size: number;
   /** @minLength 1 */
   contentType: string;

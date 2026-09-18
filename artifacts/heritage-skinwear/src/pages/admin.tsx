@@ -19,6 +19,38 @@ import {
 import type { Product, ProductInput, ProductUpdate, Review } from '@workspace/api-client-react';
 import { Link } from 'wouter';
 
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const IMAGE_EXTENSIONS = new Set([
+  'avif',
+  'bmp',
+  'gif',
+  'heic',
+  'heif',
+  'ico',
+  'jpeg',
+  'jpg',
+  'png',
+  'svg',
+  'tif',
+  'tiff',
+  'webp',
+]);
+const IMAGE_MIME_BY_EXTENSION: Record<string, string> = {
+  avif: 'image/avif',
+  bmp: 'image/bmp',
+  gif: 'image/gif',
+  heic: 'image/heic',
+  heif: 'image/heif',
+  ico: 'image/x-icon',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  webp: 'image/webp',
+};
+
 type ProductForm = {
   name: string;
   category: string;
@@ -104,16 +136,60 @@ function ProductEditor({ product, onClose }: { product: Product | null; onClose:
   };
 
   const uploadImage = async (file: File) => {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setFeedback('This image is too large. Please choose an image up to 10 MB.');
+      return;
+    }
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const extensionType = extension
+      ? IMAGE_MIME_BY_EXTENSION[extension]
+      : undefined;
+    const contentType =
+      file.type.startsWith('image/') ? file.type : extensionType || file.type;
+    if (!contentType || !contentType.startsWith('image/')) {
+      setFeedback(
+        'Please choose an image file such as JPG, PNG, GIF, WEBP, AVIF, HEIC, TIFF, SVG, or BMP.',
+      );
+      return;
+    }
+
     setUploading(true);
     setFeedback('');
     try {
-      const response = await requestUploadUrl.mutateAsync({ data: { name: file.name, size: file.size, contentType: file.type } });
-      const upload = await fetch(response.uploadURL, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-      if (!upload.ok) throw new Error('Upload failed');
+      const response = await requestUploadUrl.mutateAsync({
+        data: { name: file.name, size: file.size, contentType },
+      });
+      const upload = await fetch(response.uploadURL, {
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        body: file,
+      });
+      if (!upload.ok) {
+        throw new Error(`Storage upload failed (${upload.status})`);
+      }
       setField('imageUrl', `/api/storage${response.objectPath}`);
       setFeedback('Image uploaded. Save the piece to publish the new image.');
-    } catch {
-      setFeedback('The image could not be uploaded. Please try another file.');
+    } catch (error) {
+      const apiError = error as {
+        status?: number;
+        data?: { error?: string };
+        message?: string;
+      };
+      if (apiError.status === 403) {
+        setFeedback(
+          'Your account is signed in but is not configured as the owner. Set the owner Clerk ID or email, then sign in again.',
+        );
+      } else if (apiError.status === 413) {
+        setFeedback('This image is too large. Please choose an image up to 10 MB.');
+      } else if (apiError.status === 415) {
+        setFeedback(
+          'Please choose an image file such as JPG, PNG, GIF, WEBP, AVIF, HEIC, TIFF, SVG, or BMP.',
+        );
+      } else {
+        setFeedback(
+          apiError.message || 'The image could not be uploaded. Please try again.',
+        );
+      }
     } finally {
       setUploading(false);
     }
@@ -124,7 +200,7 @@ function ProductEditor({ product, onClose }: { product: Product | null; onClose:
       <form onSubmit={save} className="mx-auto max-w-4xl bg-[hsl(var(--card))] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-5 py-5 sm:px-8"><div><p className="eyebrow text-[hsl(var(--accent))]">{isEditing ? 'Edit the record' : 'New piece'}</p><h2 className="mt-1 font-display text-3xl text-[hsl(var(--primary))]">{isEditing ? product?.name : 'Add to the collection'}</h2></div><button type="button" onClick={onClose} className="focus-ring rounded-full border border-[hsl(var(--border))] p-2 text-[hsl(var(--primary))]" aria-label="Close editor" data-testid="button-close-product-editor"><X size={18} /></button></div>
         <div className="grid gap-7 p-5 sm:p-8 lg:grid-cols-[.75fr_1.25fr]">
-          <div><div className="relative aspect-[4/5] overflow-hidden bg-[hsl(var(--muted))]">{form.imageUrl ? <img src={form.imageUrl} alt="Product preview" className="h-full w-full object-cover" /> : <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-[hsl(var(--muted-foreground))]"><ImagePlus size={27} /><span className="text-xs">Upload a generous product image</span></div>}</div><label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[hsl(var(--primary)/.28)] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))]"><ImagePlus size={14} /> {uploading ? 'Uploading…' : 'Upload image'}<input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); }} data-testid="input-product-image" /></label><p className="mt-2 text-[10px] leading-5 text-[hsl(var(--muted-foreground))]">Or paste an existing serving URL below. Uploaded files are stored through the protected object storage flow.</p></div>
+          <div><div className="relative aspect-[4/5] overflow-hidden bg-[hsl(var(--muted))]">{form.imageUrl ? <img src={form.imageUrl} alt="Product preview" className="h-full w-full object-cover" /> : <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-[hsl(var(--muted-foreground))]"><ImagePlus size={27} /><span className="text-xs">Upload a generous product image</span></div>}</div><label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[hsl(var(--primary)/.28)] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--primary))] hover:bg-[hsl(var(--muted))]"><ImagePlus size={14} /> {uploading ? 'Uploading…' : 'Upload image'}<input type="file" accept="image/*,.avif,.bmp,.gif,.heic,.heif,.ico,.jpeg,.jpg,.png,.svg,.tif,.tiff,.webp" className="sr-only" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); }} data-testid="input-product-image" /></label><p className="mt-2 text-[10px] leading-5 text-[hsl(var(--muted-foreground))]">Images only · up to 10 MB · JPG, PNG, GIF, WEBP, AVIF, HEIC, TIFF, SVG, BMP, and more. Uploaded files are stored through protected object storage.</p></div>
           <div className="grid content-start gap-4 sm:grid-cols-2">
             <label className="sm:col-span-2 field-label">Product name<input required value={form.name} onChange={(event) => setField('name', event.target.value)} className="field mt-2" placeholder="e.g. Tide Line Mukluk" data-testid="input-product-name" /></label>
             <label className="field-label">Category<select value={form.category} onChange={(event) => setField('category', event.target.value)} className="field mt-2" data-testid="select-product-category"><option>Footwear</option><option>Outerwear</option><option>Accessories</option></select></label>

@@ -5,6 +5,14 @@ export type AdminRequest = Request & {
   adminUserId: string;
 };
 
+function getClaimString(
+  claims: Record<string, unknown> | undefined,
+  key: string,
+): string | undefined {
+  const value = claims?.[key];
+  return typeof value === "string" ? value : undefined;
+}
+
 export function requireAdmin(
   req: Request,
   res: Response,
@@ -18,16 +26,45 @@ export function requireAdmin(
     return;
   }
 
-  const configuredAdminId = process.env.ADMIN_CLERK_USER_ID;
+  const configuredAdminIds = (process.env.ADMIN_CLERK_USER_IDS ??
+    process.env.ADMIN_CLERK_USER_ID ??
+    "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const configuredAdminEmails = (process.env.ADMIN_CLERK_USER_EMAILS ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  const sessionClaims = auth.sessionClaims as
+    | Record<string, unknown>
+    | undefined;
+  const email =
+    getClaimString(sessionClaims, "email") ??
+    getClaimString(sessionClaims, "email_address");
+  const metadata = sessionClaims?.metadata as
+    | Record<string, unknown>
+    | undefined;
+  const hasOwnerRole = metadata?.role === "owner";
+  const isConfiguredOwner =
+    configuredAdminIds.includes(userId) ||
+    (email ? configuredAdminEmails.includes(email.toLowerCase()) : false) ||
+    hasOwnerRole;
+
   if (
-    configuredAdminId &&
-    configuredAdminId !== userId
+    (configuredAdminIds.length > 0 || configuredAdminEmails.length > 0) &&
+    !isConfiguredOwner
   ) {
     res.status(403).json({ error: "Owner access required" });
     return;
   }
 
-  if (!configuredAdminId && process.env.NODE_ENV === "production") {
+  if (
+    configuredAdminIds.length === 0 &&
+    configuredAdminEmails.length === 0 &&
+    !hasOwnerRole &&
+    process.env.NODE_ENV === "production"
+  ) {
     res.status(403).json({ error: "Owner access is not configured" });
     return;
   }
