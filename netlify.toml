@@ -1,0 +1,8 @@
+[build]
+  command = "pnpm --filter @workspace/heritage-skinwear run build"
+  publish = "artifacts/heritage-skinwear/dist/public"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
