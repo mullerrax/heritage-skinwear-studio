@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: products
+    description: Public product catalog and owner product management
+  - name: reviews
+    description: Customer reviews and owner moderation
+  - name: storage
+    description: Protected product image uploads
 paths:
   /healthz:
     get:
@@ -24,7 +30,206 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List published products
+      responses:
+        "200":
+          description: Published product catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+  /admin/products:
+    get:
+      operationId: listAllProducts
+      tags: [products]
+      summary: List all products for owner management
+      responses:
+        "200":
+          description: Complete product catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+  /products/{id}:
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+        "404":
+          description: Product not found
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Product deleted
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+        "404":
+          description: Product not found
+  /reviews:
+    get:
+      operationId: listApprovedReviews
+      tags: [reviews]
+      summary: List approved customer reviews
+      responses:
+        "200":
+          description: Approved reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: submitReview
+      tags: [reviews]
+      summary: Submit a customer review for moderation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "201":
+          description: Submitted review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+  /admin/reviews:
+    get:
+      operationId: listAllReviews
+      tags: [reviews]
+      summary: List all reviews for moderation
+      responses:
+        "200":
+          description: All customer reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+  /admin/reviews/{id}:
+    patch:
+      operationId: moderateReview
+      tags: [reviews]
+      summary: Approve or hide a review
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewModeration"
+      responses:
+        "200":
+          description: Moderated review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
+        "404":
+          description: Review not found
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a protected product image upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+      responses:
+        "200":
+          description: Presigned upload destination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+        "401":
+          description: Authentication required
+        "403":
+          description: Owner access required
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +238,179 @@ components:
           type: string
       required:
         - status
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        material:
+          type: string
+        imageUrl:
+          type: string
+        detail:
+          type: string
+        season:
+          type: string
+        available:
+          type: boolean
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - description
+        - material
+        - imageUrl
+        - detail
+        - season
+        - available
+        - sortOrder
+        - createdAt
+        - updatedAt
+    ProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        material:
+          type: string
+        imageUrl:
+          type: string
+          minLength: 1
+        detail:
+          type: string
+        season:
+          type: string
+        available:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - name
+        - category
+        - description
+        - material
+        - imageUrl
+        - detail
+        - season
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        material:
+          type: string
+        imageUrl:
+          type: string
+          minLength: 1
+        detail:
+          type: string
+        season:
+          type: string
+        available:
+          type: boolean
+        sortOrder:
+          type: integer
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        displayName:
+          type: string
+        body:
+          type: string
+        rating:
+          type: integer
+        approved:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - displayName
+        - body
+        - rating
+        - approved
+        - createdAt
+        - updatedAt
+    ReviewInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+      required:
+        - displayName
+        - body
+        - rating
+    ReviewModeration:
+      type: object
+      properties:
+        approved:
+          type: boolean
+      required:
+        - approved
+    UploadRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+      required:
+        - name
+        - size
+        - contentType
+    UploadResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+      required:
+        - uploadURL
+        - objectPath
 
